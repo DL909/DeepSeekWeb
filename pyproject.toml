@@ -1,11 +1,9 @@
 [project]
 name = "deepseekweb"
-version = "0.1.0"
+version = "0.2.0"
 description = "把 DeepSeek 网页端暴露为可调用的 python 接口"
 readme = "README.md"
-authors = [
-    { name = "DL909", email = "matthewDingL@outlook.com" }
-]
+authors = [{ name = "DL909", email = "matthewDingL@outlook.com" }]
 requires-python = ">=3.13"
 dependencies = ["playwright>=1.40"]
 
