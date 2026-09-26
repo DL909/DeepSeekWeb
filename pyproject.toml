@@ -1,0 +1,17 @@
+[project]
+name = "deepseekweb"
+version = "0.1.0"
+description = "把 DeepSeek 网页端暴露为可调用的 python 接口"
+readme = "README.md"
+authors = [
+    { name = "DL909", email = "matthewDingL@outlook.com" }
+]
+requires-python = ">=3.13"
+dependencies = ["playwright>=1.40"]
+
+[project.scripts]
+deepseekweb = "deepseekweb:main"
+
+[build-system]
+requires = ["uv_build>=0.12.3,<0.13.0"]
+build-backend = "uv_build"
