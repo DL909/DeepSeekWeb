@@ -11,12 +11,17 @@ import re
 
 HOME_URL = "https://chat.deepseek.com/"
 SESSION_URL = "https://chat.deepseek.com/a/chat/s/{session_id}"
+CHAT_ORIGIN = "https://chat.deepseek.com"
 
 #: 会话 id 出现在地址栏路径里
 SESSION_ID_RE = re.compile(r"/a/chat/s/([0-9a-fA-F-]{8,})")
 
 #: 前端真正发请求的接口，用来判断"这一轮生成结束了"
 COMPLETION_API = "/api/v0/chat/completion"
+#: 某个会话的完整消息（不带 cache_version 才是全量，见 history.py）
+HISTORY_API = "/api/v0/chat/history_messages"
+#: 会话列表
+SESSIONS_API = "/api/v0/chat_session/fetch_page"
 
 #: 消息容器：一条消息一个 div，用户和助手消息都在里面
 MESSAGE = "div.ds-message"
@@ -50,6 +55,37 @@ DEFAULT_USER_DATA_DIR = os.path.join(
 #: ``/Applications/Google Chrome.app/Contents/MacOS/Google Chrome \
 #:     --remote-debugging-port=9222 --user-data-dir=/path/to/profile``
 CDP_URL_ENV = "DEEPSEEKWEB_CDP_URL"
+
+# 从 localStorage 里取登录 token（带版本包装的 JSON）
+TOKEN_JS = """
+() => {
+  const raw = localStorage.getItem('userToken');
+  if (!raw) return '';
+  try {
+    const parsed = JSON.parse(raw);
+    const value = parsed && 'value' in parsed ? parsed.value : parsed;
+    return value == null ? '' : String(value);
+  } catch (e) {
+    return raw;
+  }
+}
+"""
+
+# 在页面里发一个带 Authorization 的同源请求（裸 fetch 会被判 INVALID_TOKEN）
+API_FETCH_JS = """
+async ({url, token}) => {
+  const res = await fetch(url, {
+    credentials: 'include',
+    headers: token ? {Authorization: 'Bearer ' + token} : {},
+  });
+  const text = await res.text();
+  try {
+    return JSON.parse(text);
+  } catch (e) {
+    return {code: -1, msg: 'not json: ' + text.slice(0, 120)};
+  }
+}
+"""
 
 # 在页面里执行的提取脚本：取最后一条消息的思考过程与正文
 EXTRACT_LAST_MESSAGE_JS = """

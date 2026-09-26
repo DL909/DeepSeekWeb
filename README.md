@@ -67,20 +67,45 @@ user.close()  # 用完记得断开
 
 | 字段 | 含义 |
 | --- | --- |
-| `answer` / `reasoning` | 回答正文、思考过程 |
+| `answer` / `reasoning` | 回答正文、思考过程（**没有思考时是 `None`，判断请用 `is not None`**） |
 | `question` | 本轮输入 |
 | `session_id` | 会话 id |
 | `thinking_enabled` / `search_enabled` | 本轮实际下发的开关 |
 | `status` | 正常是 `FINISHED` |
 | `usage` | 本轮 token 用量 |
 | `title` | DeepSeek 自动生成的会话标题 |
+| `id` / `parent_id` | 消息 id 与父消息 id，串起对话的树 |
 | `raw` | `/api/v0/chat/completion` 的原始 SSE，排错用 |
+
+### 过往对话
+
+```python
+for info in user.list_sessions(limit=10):   # 最近 10 个会话，最近更新的在前
+    print(info.id, info.title, info.url)
+
+session = user.get_session("7021d573-...")  # 或者直接 DeepSeekSession(user=user, id=...)
+for message in session.get_messages():       # 这个会话的完整对话，按顺序
+    if isinstance(message, UserPrompt):
+        print("问>", message.content)
+        if len(message.file):
+            raise NotImplementedError()      # v0.1 不支持附件
+    else:
+        if message.reasoning is not None:
+            print("想>", message.reasoning)
+        print("答>", message.answer)
+```
+
+`get_messages()` 走服务端接口而不是页面 DOM，两个原因：长对话不会被虚拟列表的
+渲染窗口截断（实测 DOM 里会少掉最早的一条用户消息，接口里是全的），也不用先把页面切到那个会话。
+重新生成留下的旧分支不会出现，只返回当前这条分支。
 
 ### 命令行
 
 ```bash
 deepseekweb "写一首关于秋天的诗" --reasoning
 deepseekweb "继续" --session 7021d573-aa52-44c3-9802-bae27f7c759c --cdp http://127.0.0.1:9222
+deepseekweb --list-sessions 10                       # 列最近 10 个会话
+deepseekweb --session 7021d573-... --history         # 打印某个会话的完整对话
 ```
 
 ## 实现说明
@@ -89,6 +114,11 @@ deepseekweb "继续" --session 7021d573-aa52-44c3-9802-bae27f7c759c --cdp http:/
   比盯着 DOM 猜要稳，思考很久、中间停顿都不会误判。
 - **内容从哪来**：思考过程取 `div.ds-think-content`，回答取 `div.ds-assistant-message-main-content`。
   只用 `ds-` 开头的设计系统类名，不用 `_74c0879` 这类构建期哈希类名。
+- **历史从哪来**：`GET /api/v0/chat/history_messages`。这里有个坑——该接口认
+  `cache_version` 参数，浏览器本地缓存过这个会话时服务端只回增量（`cache_control: MERGE`），
+  缺的部分得靠前端从 IndexedDB 里补；**不传这个参数就是全量**（`REPLACE`），
+  所以库里一律不传。请求在页面里用 `Authorization: Bearer <userToken>` 发，
+  裸 `fetch` 会被判 `INVALID_TOKEN`。
 - **一个 user 一个页面**：`DeepSeekSession` 只是"会话 id + 开关"，共用同一个浏览器页面，
   `send` 之前会先把页面切到对应的会话。
 
@@ -98,10 +128,12 @@ deepseekweb "继续" --session 7021d573-aa52-44c3-9802-bae27f7c759c --cdp http:/
 - 只能同步调用（Playwright 同步 API），单次调用会阻塞到这一轮结束。
 - 依赖 DeepSeek 前端的 DOM 结构，前端改版可能要调 `constants.py` 里的选择器。
 - 登录页的验证码（hCaptcha）不处理，需要手动点一下。
+- `list_sessions()` 只取接口的一页（返回里带 `has_more` 表示还有更多），翻页暂未实现。
 
 ## 开发
 
 ```bash
-python tests/test_sse.py    # 纯单元测试，不需要浏览器
-python tests/smoke.py       # 端到端，需要一个已登录且开了调试端口的 Chrome
+python tests/test_sse.py       # 纯单元测试，不需要浏览器
+python tests/test_history.py   # 历史解析的单元测试，不需要浏览器
+python tests/smoke.py          # 端到端，需要一个已登录且开了调试端口的 Chrome
 ```

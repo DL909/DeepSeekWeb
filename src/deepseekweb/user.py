@@ -10,8 +10,10 @@ from typing import Any
 
 from .browser import DeepSeekBrowser
 from .constants import DEFAULT_TIMEOUT
+from .history import SessionInfo, parse_sessions
 from .login import login as do_login
 from .page import ChatPage
+from .session import DeepSeekSession
 
 
 class DeepSeekUser:
@@ -80,6 +82,26 @@ class DeepSeekUser:
         page.require_login()
         self._prepared = True
         return page
+
+    # ------------------------------------------------------------------ 历史
+
+    def list_sessions(self, limit: int | None = None) -> list[SessionInfo]:
+        """列出历史会话，最近更新的排在最前面。
+
+        拿到 id 就能用 :meth:`DeepSeekSession.get_messages` 读它的内容::
+
+            for info in user.list_sessions(limit=10):
+                print(info.id, info.title)
+
+        Args:
+            limit: 最多返回几条。接口一次只给一页，这里在客户端截断。
+        """
+        sessions, _has_more = parse_sessions(self.prepare().fetch_sessions())
+        return sessions[:limit] if limit else sessions
+
+    def get_session(self, id: str) -> DeepSeekSession:
+        """按 id 拿一个会话对象，用来读历史或继续对话。"""
+        return DeepSeekSession(user=self, id=id, timeout=self.timeout)
 
     def close(self) -> None:
         """断开浏览器连接。"""

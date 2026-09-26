@@ -6,6 +6,8 @@ import warnings
 from typing import Any
 
 from .constants import DEFAULT_TIMEOUT, SESSION_URL
+from .history import parse_messages
+from .messages import Message
 from .page import ChatPage
 from .response import DeepSeekResponse
 from .sse import parse_stream
@@ -124,6 +126,26 @@ class DeepSeekSession:
         raw = page.send(input, timeout=self.timeout)
         return self._build_response(raw, question=input)
 
+    # ------------------------------------------------------------------ 读历史
+
+    def get_messages(self) -> list[Message]:
+        """读出这个会话的完整对话，按对话顺序返回。
+
+        返回 :class:`~deepseekweb.messages.UserPrompt` 与
+        :class:`~deepseekweb.response.DeepSeekResponse` 交替的列表::
+
+            for message in session.get_messages():
+                if isinstance(message, UserPrompt):
+                    print(message.content)
+                else:
+                    print(message.answer)
+
+        走的是服务端接口而不是页面 DOM：长对话不会被虚拟列表的渲染窗口截断，
+        也不需要先把页面切到这个会话。重新生成留下的旧分支不会出现——
+        只返回当前这条分支。
+        """
+        return parse_messages(self._page.fetch_history(self.id), session_id=self.id)
+
     # ------------------------------------------------------------------ 内部
 
     def _build_response(self, raw: str | None, question: str) -> DeepSeekResponse:
@@ -131,7 +153,7 @@ class DeepSeekSession:
         text = self._page.last_message()
         return DeepSeekResponse(
             answer=text.get("answer", ""),
-            reasoning=text.get("reasoning", ""),
+            reasoning=text.get("reasoning") or None,
             question=question or text.get("question", ""),
             session_id=self.id,
             thinking_enabled=self.thinking,

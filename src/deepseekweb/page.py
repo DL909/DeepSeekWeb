@@ -15,17 +15,22 @@ from playwright.sync_api import Page, TimeoutError as PlaywrightTimeout
 
 from .constants import (
     ANSWER_READY_JS,
+    API_FETCH_JS,
+    CHAT_ORIGIN,
     COMPLETION_API,
     DEFAULT_TIMEOUT,
     DISABLED_CLASS,
     EXTRACT_LAST_MESSAGE_JS,
+    HISTORY_API,
     HOME_URL,
     INPUT_BOX,
     READY_SELECTOR,
     SEND_BUTTON,
+    SESSIONS_API,
     SESSION_ID_RE,
     SESSION_URL,
     START_GRACE_TIMEOUT,
+    TOKEN_JS,
     TOGGLE_BUTTON,
     TOGGLE_LABELS,
 )
@@ -259,3 +264,32 @@ class ChatPage:
         if not data:
             raise ElementNotFound("页面上没有可读取的消息")
         return data
+
+    # ------------------------------------------------------------------ 接口
+
+    def ensure_origin(self) -> None:
+        """确保页面停在 chat.deepseek.com 上——接口请求是同源的，还依赖这里的登录态。"""
+        if self.page.evaluate("() => location.origin") != CHAT_ORIGIN:
+            self.open_home()
+
+    def api_get(self, path: str, params: dict[str, str] | None = None) -> dict:
+        """在页面里发一个带 token 的同源 GET，返回解析好的 JSON。"""
+        self.ensure_origin()
+        query = "&".join(f"{key}={value}" for key, value in (params or {}).items())
+        url = f"{path}?{query}" if query else path
+        token = self.page.evaluate(TOKEN_JS)
+        if not token:
+            raise LoginRequired("没有拿到登录 token，请确认浏览器处于登录态")
+        return self.page.evaluate(API_FETCH_JS, {"url": url, "token": token})
+
+    def fetch_history(self, session_id: str) -> dict:
+        """某个会话的完整消息。
+
+        刻意**不传** ``cache_version``：传了服务端只回增量，缺的部分得靠浏览器
+        本地缓存补，程序上不可靠；不传则稳定返回全量。
+        """
+        return self.api_get(HISTORY_API, {"chat_session_id": session_id})
+
+    def fetch_sessions(self) -> dict:
+        """会话列表（接口一次只给一页，是否还有更多看返回里的 ``has_more``）。"""
+        return self.api_get(SESSIONS_API, {"lte_cursor.pinned": "false"})
