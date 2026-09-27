@@ -260,6 +260,12 @@ class ChatPage:
     # ------------------------------------------------------------------ 读取
 
     def last_message(self) -> dict[str, str]:
+        """从页面 DOM 取最后一条消息的文本。
+
+        这是**兜底**路径，不是正文来源：``innerText`` 是渲染后的纯文本，markdown
+        标记已经没了，还可能混进"复制""下载"这类界面文案。正文走
+        :meth:`DeepSeekSession.get_messages` 取服务端原文。
+        """
         data = self.page.evaluate(EXTRACT_LAST_MESSAGE_JS)
         if not data:
             raise ElementNotFound("页面上没有可读取的消息")

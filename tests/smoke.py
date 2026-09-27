@@ -68,6 +68,16 @@ def main() -> int:
               all(m.answer for m in history if isinstance(m, DeepSeekResponse)))
         check("历史消息 id 递增", [m.id for m in history] == sorted(m.id for m in history))
         check("读历史不把页面切走", user.page.page.url.startswith("https://chat.deepseek.com"))
+        # ---- 正文必须是原文（markdown），不是渲染后的纯文本 ----
+        md = session.send(input="用 markdown 给一个加粗短语和一个 python 代码块。")
+        check("answer 保留代码围栏", "```" in md.answer, repr(md.answer[:40]))
+        check("answer 保留加粗标记", "**" in md.answer)
+        check("answer 不含界面文案", "复制" not in md.answer and "下载" not in md.answer)
+        check("send 与 get_messages 文本一致",
+              [m for m in session.get_messages()
+               if isinstance(m, DeepSeekResponse) and m.id == md.id][0].answer == md.answer)
+        check("消息 id 与父 id 可关联", md.id is not None and md.parent_id is not None,
+              f"id={md.id} parent={md.parent_id}")
     finally:
         user.close()
 

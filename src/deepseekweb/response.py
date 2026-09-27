@@ -10,8 +10,10 @@ class DeepSeekResponse:
     """一轮问答里 DeepSeek 的回复。
 
     Attributes:
-        answer: 正文内容。
-        reasoning: 思考过程；**没有思考过程时是 ``None``**（不是空串），
+        answer: 正文**原文**，通常是 markdown（代码块围栏、列表符号、加粗标记都在）。
+            取自服务端的消息记录而非页面 DOM，所以不会丢标记、也不会混进"复制"这类
+            界面文案；`send()` 与 `get_messages()` 对同一条消息给出的是同一份文本。
+        reasoning: 思考过程原文，**没有思考过程时是 ``None``**（不是空串），
             所以判断要写 ``if response.reasoning is not None``。
         question: 本轮用户输入；从历史里读出来时为空。
         session_id: 所属会话 id。

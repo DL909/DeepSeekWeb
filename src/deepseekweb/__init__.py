@@ -25,6 +25,7 @@
 from __future__ import annotations
 
 import argparse
+import importlib.metadata
 import sys
 from collections.abc import Sequence
 
@@ -63,7 +64,11 @@ __all__ = [
     "main",
 ]
 
-__version__ = "0.1.0"
+# 版本号只有 pyproject.toml 一个来源，避免和发布出去的元数据对不上
+try:
+    __version__ = importlib.metadata.version("deepseekweb")
+except importlib.metadata.PackageNotFoundError:  # 源码目录里直接跑，没装成包
+    __version__ = "0.0.0.dev0"
 
 
 def main(argv: Sequence[str] | None = None) -> int:

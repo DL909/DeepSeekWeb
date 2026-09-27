@@ -87,7 +87,9 @@ async ({url, token}) => {
 }
 """
 
-# 在页面里执行的提取脚本：取最后一条消息的思考过程与正文
+# 在页面里执行的提取脚本：取最后一条消息的思考过程与正文。
+# 只在读不到消息原文时兜底用——innerText 是**渲染后**的纯文本，markdown 标记
+# 会被去掉、界面文案会混进来。正常路径见 session._build_response。
 EXTRACT_LAST_MESSAGE_JS = """
 () => {
   const msgs = [...document.querySelectorAll('div.ds-message')];

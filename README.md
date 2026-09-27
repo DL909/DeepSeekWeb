@@ -67,7 +67,8 @@ user.close()  # 用完记得断开
 
 | 字段 | 含义 |
 | --- | --- |
-| `answer` / `reasoning` | 回答正文、思考过程（**没有思考时是 `None`，判断请用 `is not None`**） |
+| `answer` | 回答正文，**原文**（通常是 markdown：代码围栏、列表符号、加粗标记都保留） |
+| `reasoning` | 思考过程原文；**没有思考时是 `None`**，判断请用 `is not None` |
 | `question` | 本轮输入 |
 | `session_id` | 会话 id |
 | `thinking_enabled` / `search_enabled` | 本轮实际下发的开关 |
@@ -112,8 +113,11 @@ deepseekweb --session 7021d573-... --history         # 打印某个会话的完�
 
 - **怎么知道"这一轮说完了"**：等 `/api/v0/chat/completion` 这次请求的流式响应结束。
   比盯着 DOM 猜要稳，思考很久、中间停顿都不会误判。
-- **内容从哪来**：思考过程取 `div.ds-think-content`，回答取 `div.ds-assistant-message-main-content`。
-  只用 `ds-` 开头的设计系统类名，不用 `_74c0879` 这类构建期哈希类名。
+- **内容从哪来**：正文和思考过程都取自 `history_messages` 接口的 fragment，那是**未经渲染的原文**。
+  不用 DOM 是因为 `innerText` 是渲染后的纯文本——`**` 会被去掉、列表会摊成一段段、
+  代码块围栏会消失，连"复制""下载"这种界面文案都会混进来。DOM 提取（`div.ds-think-content` /
+  `div.ds-assistant-message-main-content`）只留作兜底，读不到原文时会发 warning。
+  副作用是 `send()` 和 `get_messages()` 对同一条消息返回的文本完全一致。
 - **历史从哪来**：`GET /api/v0/chat/history_messages`。这里有个坑——该接口认
   `cache_version` 参数，浏览器本地缓存过这个会话时服务端只回增量（`cache_control: MERGE`），
   缺的部分得靠前端从 IndexedDB 里补；**不传这个参数就是全量**（`REPLACE`），
@@ -126,7 +130,8 @@ deepseekweb --session 7021d573-... --history         # 打印某个会话的完�
 
 - v0.1 不支持 `search` 和 `file`，传了会被忽略并给出 warning。
 - 只能同步调用（Playwright 同步 API），单次调用会阻塞到这一轮结束。
-- 依赖 DeepSeek 前端的 DOM 结构，前端改版可能要调 `constants.py` 里的选择器。
+- 发消息仍要操作 DOM（填输入框、点发送、拨开关），前端改版可能要调 `constants.py` 里的选择器；
+  读正文已经不走 DOM 了，所以长对话不会再因为虚拟列表被截断。
 - 登录页的验证码（hCaptcha）不处理，需要手动点一下。
 - `list_sessions()` 只取接口的一页（返回里带 `has_more` 表示还有更多），翻页暂未实现。
 

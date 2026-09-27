@@ -27,3 +27,38 @@
 [2026-09-26T14:22:56.582Z] check sid=30e71acb active=false idle=1943s
 [2026-09-26T14:37:56.519Z] check sid=e6c881ad active=false idle=9884s
 [2026-09-26T14:37:56.522Z] check sid=30e71acb active=false idle=2843s
+[2026-09-26T15:07:56.483Z] check sid=e6c881ad active=false idle=11684s
+[2026-09-26T15:07:56.493Z] dream start pid=95175 session=e6c881ad rounds=1 T=1790423592961
+[2026-09-26T15:08:32.967Z] turn-stopping pid=95175 sid=e6c881ad reason=none wasDream=true
+[2026-09-26T15:08:32.977Z] dream group 2/2 steered
+[2026-09-26T15:09:10.132Z] turn-stopping pid=95175 sid=e6c881ad reason=none wasDream=true
+[2026-09-26T15:09:10.140Z] dream group 3/3 steered
+[2026-09-26T15:11:38.381Z] turn-stopping pid=95175 sid=e6c881ad reason=none wasDream=true
+[2026-09-26T15:11:38.388Z] dream done session=e6c881ad groups=3 stamped=13
+[2026-09-26T15:20:13.335Z] hit-chain pid=95175 sid=30e71acb textLen=59 hit=yes
+[2026-09-26T15:22:56.475Z] check sid=30e71acb active=false idle=2s
+[2026-09-26T15:25:53.284Z] turn-stopping pid=95175 sid=30e71acb reason=none wasDream=false
+[2026-09-26T15:26:48.750Z] turn-stopping pid=95175 sid=30e71acb reason=none wasDream=false
+[2026-09-26T15:37:56.467Z] check sid=30e71acb active=false idle=723s
+[2026-09-26T15:52:56.612Z] check sid=30e71acb active=false idle=1623s
+[2026-09-26T16:07:56.621Z] check sid=30e71acb active=false idle=2523s
+[2026-09-26T16:22:56.669Z] check sid=30e71acb active=false idle=3423s
+[2026-09-26T16:37:56.701Z] check sid=30e71acb active=false idle=4323s
+[2026-09-26T16:52:56.718Z] check sid=30e71acb active=false idle=5223s
+[2026-09-26T17:07:56.734Z] check sid=30e71acb active=false idle=6123s
+[2026-09-26T17:22:56.699Z] check sid=30e71acb active=false idle=7023s
+[2026-09-26T17:37:56.714Z] check sid=30e71acb active=false idle=7923s
+[2026-09-26T17:52:56.687Z] check sid=30e71acb active=false idle=8823s
+[2026-09-26T18:07:56.692Z] check sid=30e71acb active=false idle=9723s
+[2026-09-26T18:22:56.721Z] check sid=30e71acb active=false idle=10623s
+[2026-09-26T18:37:56.732Z] check sid=30e71acb active=false idle=11523s
+[2026-09-26T18:37:56.749Z] dream start pid=95175 session=30e71acb rounds=3 T=1790436353275
+[2026-09-26T18:38:42.617Z] turn-stopping pid=95175 sid=30e71acb reason=none wasDream=true
+[2026-09-26T18:38:42.625Z] dream group 2/3 steered
+[2026-09-26T18:39:14.556Z] turn-stopping pid=95175 sid=30e71acb reason=none wasDream=true
+[2026-09-26T18:39:14.564Z] dream group 3/3 steered
+[2026-09-26T18:40:10.553Z] turn-stopping pid=95175 sid=30e71acb reason=none wasDream=true
+[2026-09-26T18:40:10.560Z] dream done session=30e71acb groups=3 stamped=15
+[2026-09-27T07:24:51.639Z] pre-step first pid=90602 sid=30e71acb priorUser=3 userMsgs=1
+[2026-09-27T07:24:51.643Z] hit-chain pid=90602 sid=30e71acb textLen=3 hit=null
+[2026-09-27T07:25:17.714Z] turn-stopping pid=90602 sid=30e71acb reason=none wasDream=false

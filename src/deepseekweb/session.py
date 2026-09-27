@@ -6,11 +6,36 @@ import warnings
 from typing import Any
 
 from .constants import DEFAULT_TIMEOUT, SESSION_URL
+from .exceptions import DeepSeekWebError
 from .history import parse_messages
-from .messages import Message
+from .messages import Message, UserPrompt
 from .page import ChatPage
 from .response import DeepSeekResponse
 from .sse import parse_stream
+
+
+def _pick_assistant(
+    messages: list[Message], message_id: int | None
+) -> DeepSeekResponse | None:
+    """在历史里定位本轮的助手消息：优先按 id，定位不到就用最后一条。"""
+    answers = [m for m in messages if isinstance(m, DeepSeekResponse)]
+    if not answers:
+        return None
+    for message in answers:
+        if message_id is not None and message.id == message_id:
+            return message
+    return answers[-1]
+
+
+def _question_before(messages: list[Message], answer: DeepSeekResponse) -> UserPrompt | None:
+    """取这条助手消息对应的上一条用户提问。"""
+    for index, item in enumerate(messages):
+        if item is answer:
+            for previous in reversed(messages[:index]):
+                if isinstance(previous, UserPrompt):
+                    return previous
+            return None
+    return None
 
 #: v0.1 明确不支持的能力，传什么都当作"关"
 UNSUPPORTED = ("file", "search")
@@ -149,20 +174,52 @@ class DeepSeekSession:
     # ------------------------------------------------------------------ 内部
 
     def _build_response(self, raw: str | None, question: str) -> DeepSeekResponse:
+        """组装本轮回复。
+
+        正文取自 ``history_messages`` 里的 RESPONSE fragment，那是**未经渲染的原文**
+        （通常就是 markdown）。不用 DOM 是因为 DOM 拿到的是渲染后的纯文本：`**` 会被
+        去掉、列表会摊成一段段、代码块的围栏会消失，连"复制""下载"这种界面文案都会
+        混进来。顺带的好处是 ``send()`` 与 :meth:`get_messages` 对同一条消息给出的
+        文本完全一致。
+        """
         summary = parse_stream(raw)
-        text = self._page.last_message()
+        messages = self._safe_history()
+        source = _pick_assistant(messages, summary.response_message_id)
+        if source is not None:
+            answer, reasoning = source.answer, source.reasoning
+            parent = _question_before(messages, source)
+            question = question or (parent.content if parent else "")
+        else:
+            # 拿不到原文时退回 DOM，但那是渲染后的文本，必须让人知道
+            warnings.warn(
+                "读取消息原文失败，answer 退回页面渲染后的纯文本（会丢掉 markdown 标记）",
+                stacklevel=3,
+            )
+            text = self._page.last_message()
+            answer, reasoning = text.get("answer", ""), text.get("reasoning") or None
+            question = question or text.get("question", "")
+
         return DeepSeekResponse(
-            answer=text.get("answer", ""),
-            reasoning=text.get("reasoning") or None,
-            question=question or text.get("question", ""),
+            answer=answer,
+            reasoning=reasoning,
+            question=question,
             session_id=self.id,
             thinking_enabled=self.thinking,
             search_enabled=self.search,
             status=summary.status,
             usage=summary.usage,
             title=summary.title,
+            id=summary.response_message_id or getattr(source, "id", None),
+            parent_id=getattr(source, "parent_id", None),
             raw=raw,
         )
+
+    def _safe_history(self) -> list[Message]:
+        """读历史；读不到就返回空列表，让调用方走 DOM 兜底。"""
+        try:
+            return self.get_messages()
+        except DeepSeekWebError:
+            return []
 
     def __repr__(self) -> str:  # pragma: no cover - 展示用
         return f"DeepSeekSession(id={self.id!r}, thinking={self.thinking}, search={self.search})"

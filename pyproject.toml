@@ -1,11 +1,16 @@
 [project]
 name = "deepseekweb"
-version = "0.2.0"
+version = "0.2.1"
 description = "把 DeepSeek 网页端暴露为可调用的 python 接口"
 readme = "README.md"
-authors = [{ name = "DL909", email = "matthewDingL@outlook.com" }]
 requires-python = ">=3.13"
 dependencies = ["playwright>=1.40"]
+
+# 注意：uv 0.12.3 构建 sdist 时总会额外放一份 pyproject.toml.orig，
+# 与这里的写法无关（无注释的最小 pyproject 也一样），不用管它
+[[project.authors]]
+name = "DL909"
+email = "matthewDingL@outlook.com"
 
 [project.scripts]
 deepseekweb = "deepseekweb:main"
@@ -13,3 +18,11 @@ deepseekweb = "deepseekweb:main"
 [build-system]
 requires = ["uv_build>=0.12.3,<0.13.0"]
 build-backend = "uv_build"
+
+# 显式声明源码布局，不依赖默认值推断：功能代码来自 src/deepseekweb/
+[tool.uv.build-backend]
+module-root = "src"
+module-name = "deepseekweb"
+# sdist 不带测试。默认本来也不带（uv 只收模块、readme、license-files），
+# 写出来是为了以后有人加 source-include 时不会把测试带进去
+source-exclude = ["/tests"]
