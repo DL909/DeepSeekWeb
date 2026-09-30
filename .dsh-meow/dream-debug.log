@@ -62,3 +62,12 @@
 [2026-09-27T07:24:51.639Z] pre-step first pid=90602 sid=30e71acb priorUser=3 userMsgs=1
 [2026-09-27T07:24:51.643Z] hit-chain pid=90602 sid=30e71acb textLen=3 hit=null
 [2026-09-27T07:25:17.714Z] turn-stopping pid=90602 sid=30e71acb reason=none wasDream=false
+[2026-09-27T10:24:35.877Z] check sid=30e71acb active=false idle=10758s
+[2026-09-27T10:39:35.791Z] check sid=30e71acb active=false idle=11658s
+[2026-09-27T10:39:35.814Z] dream start pid=90602 session=30e71acb rounds=3 T=1790493917705
+[2026-09-27T10:40:30.380Z] turn-stopping pid=90602 sid=30e71acb reason=none wasDream=true
+[2026-09-27T10:40:30.389Z] dream group 2/3 steered
+[2026-09-27T10:40:55.582Z] turn-stopping pid=90602 sid=30e71acb reason=none wasDream=true
+[2026-09-27T10:40:55.590Z] dream group 3/3 steered
+[2026-09-27T10:41:26.145Z] turn-stopping pid=90602 sid=30e71acb reason=none wasDream=true
+[2026-09-27T10:41:26.155Z] dream done session=30e71acb groups=3 stamped=16

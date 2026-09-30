@@ -13,3 +13,6 @@ wheels/
 .chrome-*/
 .scratch/
 .uv-cache/
+
+# uv
+uv.lock
